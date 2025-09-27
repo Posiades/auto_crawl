@@ -1,20 +1,23 @@
 import time
+import os
 from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
 from selenium.common import TimeoutException
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from openpyxl import Workbook
 
-# danh sách phần mềm Adobe
-adobe_apps = [
-    "Acrobat", "Photoshop", "Illustrator", "After Effects", "Premiere Pro",
-    "Lightroom", "InDesign", "Animate", "Audition", "Bridge", "Dreamweaver",
-    "Fresco", "Character Animator", "Dimension", "Media Encoder", "XD"
-]
 
-def crawl_adobe_links(output="cache_excel/adobe_link_crawl.xlsx"):
-    driver = webdriver.Firefox()
+
+def crawl_links(name_software, path_name):
+    # tạo options
+    options = Options()
+    options.headless = True  # bật chế độ ẩn
+
+    # khởi tạo driver với options
+    driver = webdriver.Firefox(options=options)
+
     wait = WebDriverWait(driver, 15)
     results = []
 
@@ -29,7 +32,7 @@ def crawl_adobe_links(output="cache_excel/adobe_link_crawl.xlsx"):
     driver.get("https://karanpc.com/windows/")
     adblock()
 
-    for app in adobe_apps:
+    for app in name_software:
         print(f"🔹 Crawl {app} (link đầu tiên)")
         container = wait.until(EC.presence_of_element_located((By.ID, "ajaxsearchlite2")))
         search_input = container.find_element(By.CSS_SELECTOR, "input.orig")
@@ -55,11 +58,13 @@ def crawl_adobe_links(output="cache_excel/adobe_link_crawl.xlsx"):
     # lưu ra Excel
     wb = Workbook()
     ws = wb.active
-    ws.title = "adobe_links"
+    ws.title = f"{path_name}"
     ws.append(["Phần mềm", "Link"])
     for app, link in results:
         ws.append([app, link])
+    output = f"excel/{path_name}.xlsx"
+    os.makedirs(os.path.dirname(output), exist_ok=True)  # tạo folder nếu chưa có
     wb.save(output)
-    print(f"Đã lưu {len(results)} link Adobe vào {output}")
+    print(f"Đã lưu {len(results)} link vào {output}")
 
 
