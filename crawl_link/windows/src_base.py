@@ -1,7 +1,7 @@
 import time
 import os
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.chrome.options import Options
 from selenium.common import TimeoutException
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -11,10 +11,13 @@ from openpyxl import Workbook
 def crawl_links(name_software, path_name):
     # tạo options
     options = Options()
-    options.add_argument("-headless")  # bật chế độ ẩn
+    options.add_argument("--headless")  # bật chế độ ẩn
+    options.add_argument("--disable-gpu")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
 
     # khởi tạo driver với options
-    driver = webdriver.Firefox(options=options)
+    driver = webdriver.Chrome(options=options)
 
     wait = WebDriverWait(driver, 15)
     results = []
@@ -64,5 +67,4 @@ def crawl_links(name_software, path_name):
     os.makedirs(os.path.dirname(output), exist_ok=True)  # tạo folder nếu chưa có
     wb.save(output)
     print(f"Đã lưu {len(results)} link vào {output}")
-
 
