@@ -8,12 +8,10 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from openpyxl import Workbook
 
-
-
 def crawl_links(name_software, path_name):
     # tạo options
     options = Options()
-    options.headless = True  # bật chế độ ẩn
+    options.add_argument("-headless")  # bật chế độ ẩn
 
     # khởi tạo driver với options
     driver = webdriver.Firefox(options=options)
