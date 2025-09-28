@@ -1,4 +1,4 @@
-from windows_crawl import base_src
+from . import src_base
 
 def adobe():
     adobe_apps = [
@@ -7,4 +7,4 @@ def adobe():
         "Fresco", "Character Animator", "Dimension", "Media Encoder", "XD" ]
     path_name = 'adobe_links'
 
-    base_src.crawl_links(adobe_apps, path_name)
+    src_base.crawl_links(adobe_apps, path_name)

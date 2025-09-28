@@ -62,7 +62,7 @@ def crawl_links(name_software, path_name):
     ws.append(["Phần mềm", "Link"])
     for app, link in results:
         ws.append([app, link])
-    output = f"excel/{path_name}.xlsx"
+    output = f"excel/link/win_link/{path_name}.xlsx"
     os.makedirs(os.path.dirname(output), exist_ok=True)  # tạo folder nếu chưa có
     wb.save(output)
     print(f"Đã lưu {len(results)} link vào {output}")
