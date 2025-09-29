@@ -1,70 +1,101 @@
+import re
 import time
 import os
+from datetime import datetime
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.common import TimeoutException
-from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.firefox.options import Options
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from openpyxl import Workbook
 
-def crawl_links(name_software, path_name):
-    # tạo options
+
+def craw_link(links, path):
     options = Options()
-    options.add_argument("--headless")  # bật chế độ ẩn
-    options.add_argument("--disable-gpu")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument('--headless')
 
-    # khởi tạo driver với options
-    driver = webdriver.Chrome(options=options)
+    result = []
 
+    driver = webdriver.Firefox(options=options)
     wait = WebDriverWait(driver, 15)
-    results = []
 
-    # xử lý popup quảng cáo nếu có
-    def adblock():
-        try:
-            popup = wait.until(EC.element_to_be_clickable((By.ID, 'zeststop')))
-            popup.click()
-        except TimeoutException:
-            pass
+    page_regex = re.compile(r'/page/(\d+)/?$')
 
-    driver.get("https://karanpc.com/windows/")
-    adblock()
+    for link in links:
+        base_url = f"https://diakov.net/soft/{link}/"
+        driver.get(base_url)
+        print(f"=== Cào category: {link} ===")
 
-    for app in name_software:
-        print(f"🔹 Crawl {app} (link đầu tiên)")
-        container = wait.until(EC.presence_of_element_located((By.ID, "ajaxsearchlite2")))
-        search_input = container.find_element(By.CSS_SELECTOR, "input.orig")
-        search_input.clear()
-        search_input.send_keys(app.lower())
-        time.sleep(1)
+        while True:
+            try:
+                items = wait.until(
+                    EC.presence_of_all_elements_located((By.CSS_SELECTOR, "h2.short-title"))
+                )
 
-        search_btn = container.find_element(By.CSS_SELECTOR, "button.promagnifier")
-        search_btn.click()
-        time.sleep(2)
+                for h2 in items:
+                    anchors = h2.find_elements(By.TAG_NAME, "a")
+                    if len(anchors) >= 2:
+                        title = anchors[1].text.strip()
+                        href = anchors[1].get_attribute("href")
+                        result.append([link, title, href])
 
-        wait.until(EC.presence_of_element_located((By.ID, "main")))
+                # --- xác định current page ---
+                cur = driver.current_url
+                m = page_regex.search(cur)
+                if m:
+                    current_page = int(m.group(1))
+                else:
+                    current_page = 1
 
-        # lấy link đầu tiên
-        links = driver.find_elements(By.CSS_SELECTOR, "h2.entry-title a")
-        if links:
-            href = links[0].get_attribute("href")
-            if href:
-                results.append((app, href))
+                next_page = current_page + 1
+                candidate_next = base_url if next_page == 1 else f"{base_url}page/{next_page}/"
+
+                # chuẩn hóa
+                normalize = lambda u: u.rstrip('/')
+                candidate_norm = normalize(candidate_next)
+
+                pagination_links = driver.find_elements(By.CSS_SELECTOR, "ul.pagination li a")
+                found_next = any(
+                    normalize(a.get_attribute("href") or "") == candidate_norm
+                    for a in pagination_links
+                )
+
+                if found_next:
+                    print(f"Đi sang trang {next_page} của {link}")
+                    driver.get(candidate_next)
+                    time.sleep(0.8)
+                else:
+                    print(f"Hết trang ở category {link} (đến trang {current_page})")
+                    break
+
+            except TimeoutException:
+                print(f"⏳ Timeout khi load trang hiện tại của category {link}")
+                break
+            except Exception as e:
+                print(f"Lỗi không mong muốn ở category {link}: {e}")
+                break
 
     driver.quit()
 
-    # lưu ra Excel
+    # ghi Excel
     wb = Workbook()
     ws = wb.active
-    ws.title = f"{path_name}"
-    ws.append(["Phần mềm", "Link"])
-    for app, link in results:
-        ws.append([app, link])
-    output = f"excel/link/win_link/{path_name}.xlsx"
-    os.makedirs(os.path.dirname(output), exist_ok=True)  # tạo folder nếu chưa có
-    wb.save(output)
-    print(f"Đã lưu {len(results)} link vào {output}")
+    ws.title = "Data"
+    ws.append(["Category", "Title", "Link"])
+
+    for row in result:
+        ws.append(row)
+
+    # thêm timestamp
+    base, ext = os.path.splitext(path)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    new_path = f"{base}_{timestamp}{ext}"
+
+    folder = os.path.dirname(new_path)
+    if folder:
+        os.makedirs(folder, exist_ok=True)
+
+    wb.save(new_path)
+    print(f"✅ Đã lưu kết quả vào {new_path}")
 
