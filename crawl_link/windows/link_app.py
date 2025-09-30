@@ -1,4 +1,4 @@
-import src_base
+from . import src_base
 
 def link_app():
     links = [ "systema", "internet", "grafika", "dannye",

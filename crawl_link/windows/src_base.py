@@ -1,7 +1,7 @@
 import re
 import time
-import os
 from datetime import datetime
+from pathlib import Path
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.common.exceptions import TimeoutException
@@ -40,18 +40,13 @@ def craw_link(links, path):
                         href = anchors[1].get_attribute("href")
                         result.append([link, title, href])
 
-                # --- xác định current page ---
                 cur = driver.current_url
                 m = page_regex.search(cur)
-                if m:
-                    current_page = int(m.group(1))
-                else:
-                    current_page = 1
+                current_page = int(m.group(1)) if m else 1
 
                 next_page = current_page + 1
                 candidate_next = base_url if next_page == 1 else f"{base_url}page/{next_page}/"
 
-                # chuẩn hóa
                 normalize = lambda u: u.rstrip('/')
                 candidate_norm = normalize(candidate_next)
 
@@ -78,7 +73,7 @@ def craw_link(links, path):
 
     driver.quit()
 
-    # ghi Excel
+    # --- Ghi Excel ---
     wb = Workbook()
     ws = wb.active
     ws.title = "Data"
@@ -87,15 +82,12 @@ def craw_link(links, path):
     for row in result:
         ws.append(row)
 
-    # thêm timestamp
-    base, ext = os.path.splitext(path)
+    # Thêm timestamp vào tên file
+    path = Path(path)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    new_path = f"{base}_{timestamp}{ext}"
+    new_path = path.with_stem(f"{path.stem}_{timestamp}")
 
-    folder = os.path.dirname(new_path)
-    if folder:
-        os.makedirs(folder, exist_ok=True)
-
+    new_path.parent.mkdir(parents=True, exist_ok=True)
     wb.save(new_path)
-    print(f"✅ Đã lưu kết quả vào {new_path}")
 
+    print(f"✅ Đã lưu kết quả vào {new_path}")

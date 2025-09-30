@@ -1,1 +1,1 @@
-from .link_app import *
+from .link_app import link_app
