@@ -6,6 +6,6 @@ def link_app():
     "sbornik-programm", "mobilework", "mac-os"
     ]
 
-    path = "../../excel/link/windows/result.xlsx"
+    path = "../../excel/link/win_link/"
 
     src_base.craw_link(links, path)
