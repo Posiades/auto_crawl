@@ -3,7 +3,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -13,11 +13,14 @@ from openpyxl import Workbook
 
 def craw_link(links, path):
     options = Options()
-    options.add_argument('--headless')
+    options.add_argument("--headless")  # chạy ẩn, nếu muốn thấy thì bỏ đi
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
 
     result = []
 
-    driver = webdriver.Firefox(options=options)
+    # Chạy với Chrome thay vì Firefox
+    driver = webdriver.Chrome(options=options)
     wait = WebDriverWait(driver, 15)
 
     page_regex = re.compile(r'/page/(\d+)/?$')
@@ -82,7 +85,6 @@ def craw_link(links, path):
     for row in result:
         ws.append(row)
 
-    # Thêm timestamp vào tên file
     path = Path(path)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     new_path = path.with_stem(f"{path.stem}_{timestamp}")

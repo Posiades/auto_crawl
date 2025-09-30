@@ -1,7 +1,7 @@
 import time
 import os
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.chrome.options import Options
 from selenium.common import TimeoutException
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -12,9 +12,11 @@ from openpyxl import Workbook
 def crawl_game(path_name):
 
     options = Options()
-    options.add_argument("-headless")  # chạy ẩn
+    options.add_argument("--headless")  # chạy ẩn, muốn hiện thì bỏ đi
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
 
-    driver = webdriver.Firefox(options=options)
+    driver = webdriver.Chrome(options=options)  # dùng Chrome thay vì Firefox
     wait = WebDriverWait(driver, 15)
     result = []
 
@@ -55,4 +57,3 @@ def crawl_game(path_name):
     print(f"Đã lưu {len(result)} link vào {output}")
 
     driver.quit()
-
