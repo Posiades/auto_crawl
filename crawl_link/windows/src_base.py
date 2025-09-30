@@ -13,13 +13,10 @@ from openpyxl import Workbook
 
 def craw_link(links, path):
     options = Options()
-    options.add_argument("--headless")  # chạy ẩn, nếu muốn thấy thì bỏ đi
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--headless")
 
     result = []
 
-    # Chạy với Chrome thay vì Firefox
     driver = webdriver.Chrome(options=options)
     wait = WebDriverWait(driver, 15)
 
