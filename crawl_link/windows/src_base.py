@@ -87,6 +87,6 @@ def craw_link(links, path):
     new_path = path.with_stem(f"{path.stem}_{timestamp}")
 
     new_path.parent.mkdir(parents=True, exist_ok=True)
-    wb.save(new_path)
+    wb.save(f"{new_path}.xlsx")
 
     print(f"✅ Đã lưu kết quả vào {new_path}")
