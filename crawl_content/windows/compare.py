@@ -5,7 +5,6 @@ import re
 from datetime import datetime
 from openpyxl import Workbook
 
-
 def normalize_text(text):
     """Chuẩn hóa text mạnh mẽ hơn"""
     if pd.isna(text):

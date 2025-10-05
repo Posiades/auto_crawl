@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 
 
+
 def extract_datetime_from_filename(filename, pattern='result'):
     """Trích xuất datetime từ tên file
 
@@ -94,6 +95,5 @@ def get_latest_files():
         df_update = pd.read_excel(update_file)
         update_data = df_update.to_dict(orient="records")
 
-    return result_data, update_data
+    return result_data, update_data,
 
-print(get_latest_files())
