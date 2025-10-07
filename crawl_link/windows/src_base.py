@@ -14,6 +14,12 @@ from openpyxl import Workbook
 def craw_link(links, path):
     options = Options()
     options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+    options.page_load_strategy = 'eager'  # Không đợi tải hết trang
 
     result = []
 
@@ -89,4 +95,4 @@ def craw_link(links, path):
     new_path.parent.mkdir(parents=True, exist_ok=True)
     wb.save(f"{new_path}.xlsx")
 
-    print(f"✅ Đã lưu kết quả vào {new_path}")
+    print(f"Đã lưu kết quả vào {new_path}")

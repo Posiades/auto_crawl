@@ -1,13 +1,10 @@
 from apscheduler.schedulers.blocking import BlockingScheduler
-import time
 from crawl_link import windows as wl
 from crawl_content import windows as wc
 
 def main():
     # crawl link game and windows, macos app
     wl.link_app()
-
-
 
 
 if __name__ == '__main__':

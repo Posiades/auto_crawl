@@ -15,33 +15,87 @@ def normalize_text(text):
     return text.strip()
 
 
-def extract_datetime_from_filename(filename):
-    """Trích xuất datetime từ tên file result_YYYYMMDD_HHMMSS.xlsx
+def extract_datetime_from_filename(filename, pattern='result'):
+    """Trích xuất datetime từ tên file
+
+    Args:
+        filename: Path object
+        pattern: 'result' hoặc 'update'
 
     Returns:
         datetime object hoặc None nếu không parse được
     """
     try:
-        match = re.search(r'result_(\d{8}_\d{6})', filename.stem)
+        match = re.search(rf'{pattern}_(\d{{8}}_\d{{6}})', filename.stem)
         if match:
             datetime_str = match.group(1)
             return datetime.strptime(datetime_str, '%Y%m%d_%H%M%S')
     except Exception as e:
-        print(f"⚠️ Không parse được datetime từ {filename.name}: {e}")
+        print(f"Không parse được datetime từ {filename.name}: {e}")
     return None
+
+
+def cleanup_old_files(folder, pattern='result', keep_count=5):
+    """Xóa file cũ, chỉ giữ lại N file mới nhất
+
+    Args:
+        folder: Path đến thư mục chứa file
+        pattern: Pattern tên file ('result' hoặc 'update')
+        keep_count: Số lượng file mới nhất cần giữ lại (mặc định: 5)
+    """
+    print(f"\nDọn dẹp file {pattern} cũ (giữ lại {keep_count} file mới nhất)...")
+
+    # Tìm tất cả file theo pattern
+    all_files = list(folder.glob(f"{pattern}_*.xlsx"))
+
+    if len(all_files) <= keep_count:
+        print(f"   Có {len(all_files)} file, không cần xóa")
+        return
+
+    # Sắp xếp theo thời gian (mới nhất trước)
+    files_with_dt = []
+    for f in all_files:
+        dt = extract_datetime_from_filename(f, pattern=pattern)
+        if dt:
+            files_with_dt.append((f, dt))
+        else:
+            print(f"   ⚠️ Không parse được: {f.name}")
+
+    # Sắp xếp theo datetime (mới nhất trước)
+    files_with_dt.sort(key=lambda x: x[1], reverse=True)
+
+    # Lấy danh sách file cần xóa (bỏ qua N file mới nhất)
+    files_to_delete = files_with_dt[keep_count:]
+
+    if not files_to_delete:
+        print("Không có file nào cần xóa")
+        return
+
+    print(f"   Tìm thấy {len(files_to_delete)} file cũ cần xóa:")
+    deleted_count = 0
+
+    for f, dt in files_to_delete:
+        try:
+            os.remove(f)
+            print(f"   ✓ Đã xóa: {f.name} ({dt.strftime('%Y-%m-%d %H:%M:%S')})")
+            deleted_count += 1
+        except Exception as e:
+            print(f"   ✗ Lỗi xóa {f.name}: {e}")
+
+    print(f"   Đã xóa {deleted_count}/{len(files_to_delete)} file")
 
 
 def main():
     base_dir = Path(__file__).resolve().parents[2]
     folder = base_dir / "excel" / "link" / "win_link"
 
-    print("📂 Đang tìm file trong:", folder)
-    all_files = list(folder.glob("result_*.xls*"))
+    print("Đang tìm file trong:", folder)
+    all_files = list(folder.glob("result_*.xlsx"))
 
-    # SẮP XẾP THEO DATETIME TRONG TÊN FILE (cross-platform safe)
+    # SẮP XẾP THEO DATETIME TRONG TÊN FILE
     files_with_dt = []
     for f in all_files:
-        dt = extract_datetime_from_filename(f)
+        dt = extract_datetime_from_filename(f, pattern='result')
         if dt:
             files_with_dt.append((f, dt))
         else:
@@ -55,7 +109,7 @@ def main():
     files_with_dt.sort(key=lambda x: x[1], reverse=True)
     files = [f[0] for f in files_with_dt]
 
-    print("Tìm thấy (sắp xếp theo tên file):")
+    print("Tìm thấy (sắp xếp theo thời gian):")
     for f, dt in files_with_dt:
         print(f"   - {f.name} ({dt.strftime('%Y-%m-%d %H:%M:%S')})")
 
@@ -121,18 +175,8 @@ def main():
     else:
         print("Không có mục mới")
 
-    # XÓA FILE CŨ (giữ lại file mới nhất)
-    print("\nDọn dẹp file cũ...")
-    files_to_delete = files[1:]
-
-    for old_file in files_to_delete:
-        try:
-            os.remove(old_file)
-            print(f"Đã xóa: {old_file.name}")
-        except Exception as e:
-            print(f"Lỗi xóa {old_file.name}: {e}")
-
-    print(f"\nGiữ lại: {latest_file.name} (tham chiếu cho lần sau)")
+    # DỌN DẸP FILE result_* CŨ (giữ lại 5 file mới nhất)
+    cleanup_old_files(folder, pattern='result', keep_count=5)
 
     # LƯU KẾT QUẢ VÀO FILE MỚI
     if new_items:
@@ -143,7 +187,7 @@ def main():
         # Header
         ws.append(["Category", "Title", "Link"])
 
-        # Data - QUAN TRỌNG: Chuyển dict thành list theo thứ tự
+        # Data
         for item in new_items:
             ws.append([item['category'], item['title'], item['link']])
 
@@ -156,7 +200,14 @@ def main():
 
         wb.save(output_file)
         print(f"\nĐã lưu {len(new_items)} mục mới vào: {output_file}")
+
+        # DỌN DẸP FILE update_* CŨ (giữ lại 5 file mới nhất)
+        cleanup_old_files(output_folder, pattern='update', keep_count=5)
     else:
         print("\nKhông có gì để lưu (không có mục mới)")
 
     return new_items
+
+
+if __name__ == "__main__":
+    main()
